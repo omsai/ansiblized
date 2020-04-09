@@ -57,7 +57,6 @@
         # C++.
         - cppcheck
         - gdb
-        - gdb-doc
         - strace
         - valgrind
         # Utilities.
