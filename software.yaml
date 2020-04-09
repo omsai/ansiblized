@@ -1,0 +1,79 @@
+---
+- name: Install Debian packages
+  hosts: localhost
+
+  tasks:
+
+  - name: Fetch key for Ansible source
+    become: yes
+    apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: 93C4A3FD7BB9C367
+
+  - name: Add Ansible source
+    become: yes
+    apt_repository:
+      repo: deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main
+      filename: ansible
+
+  - name: Fetch key for R source
+    become: yes
+    apt_key:
+      keyserver: keys.gnupg.net
+      id: E19F5F87128899B192B1A2C2AD5F960A256A04AF
+
+  - name: Add R source
+    apt_repository:
+      repo: deb-src https://cloud.r-project.org/bin/linux/debian buster-cran35/
+      filename: r-project
+
+  - name: Fetch key for Syncthing source
+    apt_key:
+      url: https://syncthing.net/release-key.txt
+
+  - name: Add Syncthing source
+    apt_repository:
+      repo: deb https://apt.syncthing.net/ syncthing release
+      filename: syncthing
+
+  - name: Install packages
+    become: yes
+    apt:
+      name:
+        - ansible
+        - ansible-lint
+        # Scientific software.
+        - r-base-dev
+        # R package dependencies.
+        - libcurl4-openssl-dev
+        - libssl-dev
+        - libxml2-dev
+        # LaTeX.
+        - auctex
+        - biber
+        - chktex
+        - latexmk
+        - texlive-latex-extra
+        # C++.
+        - cppcheck
+        - gdb
+        - gdb-doc
+        - strace
+        - valgrind
+        # Utilities.
+        - collectd
+        - emacs
+        - htop
+        - ncdu
+        - syncthing
+        - time
+        - tree
+        - unattended-upgrades
+        # Desktop.
+        - gtk-redshift
+        - gimp
+        - hplip
+        - inkscape
+        - keepassxc
+        - podget
+        - thunderbird

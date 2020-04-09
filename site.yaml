@@ -1,0 +1,5 @@
+# Master playbook; only contains other playbooks.
+---
+
+- include: software.yaml
+- include: vpn.yaml

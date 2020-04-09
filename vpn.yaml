@@ -1,0 +1,43 @@
+# https://github.com/ProtonVPN/protonvpn-cli-ng
+
+- name: Install VPN
+  hosts: localhost
+  become: true
+
+  tasks:
+
+    - name: Install protonvpn-cli dependencies
+      apt:
+        name:
+          - dialog
+          - openvpn
+          - python-pexpect     # For ansible expect module.
+          - python3-pip
+          - python3-setuptools
+
+    - name: Install protonvpn-cli
+      pip:
+        name: protonvpn-cli
+        executable: pip3
+        state: latest
+
+    - name: Fail if manual configuration is necessary
+      expect:
+        command: protonvpn init
+        responses:
+          overwrite: n
+      changed_when: false
+      # Ignore return code 2.
+      register: init
+      failed_when: '"overwrite" not in init.stdout'
+
+    - name: Add VPN service file
+      template:
+        src: templates/protonvpn.service.j2
+        dest: /etc/systemd/system/protonvpn.service
+
+    - name: Enable and Start VPN service
+      service:
+        name: protonvpn
+        state: started
+        enabled: yes
