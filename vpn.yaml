@@ -3,6 +3,9 @@
 - name: Install VPN
   hosts: localhost
   become: true
+  vars:
+    prefix: /opt/protonvpn-cli
+    protonvpn: '{{ prefix }}/bin/protonvpn'
 
   tasks:
 
@@ -18,12 +21,13 @@
     - name: Install protonvpn-cli
       pip:
         name: protonvpn-cli
-        executable: pip3
+        virtualenv_command: /usr/bin/python3 -m venv
+        virtualenv: '{{ prefix }}'
         state: latest
 
     - name: Fail if manual configuration is necessary
       expect:
-        command: protonvpn init
+        command: '{{ protonvpn }} init'
         responses:
           overwrite: n
       changed_when: false
