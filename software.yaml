@@ -24,7 +24,7 @@
 
   - name: Add R source
     apt_repository:
-      repo: deb-src https://cloud.r-project.org/bin/linux/debian buster-cran35/
+      repo: deb-src https://cloud.r-project.org/bin/linux/debian buster-cran40/
       filename: r-project
 
   - name: Fetch key for Syncthing source
