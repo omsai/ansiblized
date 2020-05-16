@@ -40,6 +40,7 @@
       template:
         src: templates/protonvpn.service.j2
         dest: /etc/systemd/system/protonvpn.service
+      notify: Restart VPN service
 
     - name: Disable OpenVPN service
       service:
@@ -52,3 +53,9 @@
         name: protonvpn
         state: started
         enabled: yes
+
+  handlers:
+  - name: Restart VPN service
+    service:
+      name: protonvpn
+      state: restarted
