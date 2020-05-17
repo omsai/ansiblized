@@ -41,6 +41,7 @@ watchdog() {
 	else
 	    /bin/systemd-notify \
 		--status="Watchdog: $n_errors errors > $error_limit limit!"
+	    break
 	fi
 
 	(( i++ ))
