@@ -1,0 +1,55 @@
+#!/bin/bash
+# {{ ansible_managed }}
+
+# Adapted from https://www.medo64.com/2019/01/systemd-watchdog-for-any-service/
+watchdog() {
+    local errors error_limit error_limit_percent interval_sec i v n_errors
+
+    error_limit_percent=50
+
+    interval_sec=$(( WATCHDOG_USEC / 1000000 ))
+    # NB: error_limit rounds down any decimal value.
+    error_limit=$(( interval_sec * error_limit_percent / 100 ))
+    # shellcheck disable=SC2207
+    errors=(
+	$(for (( i=0; i < interval_sec; i++ ))
+	  do echo 0
+	  done)
+    )
+
+    i=0
+    while true
+    do
+	if /bin/nc -zw1 eff.org 443
+	then
+	    (( errors[i] = 0 ))
+	else
+	    (( errors[i] = 1 ))
+	fi
+
+	n_errors=0
+	for v in ${errors[*]}
+	do
+	    (( n_errors += v ))
+	done
+
+	if (( n_errors <= error_limit ))
+	then
+	    /bin/systemd-notify \
+		--status="Watchdog: $n_errors errors <= $error_limit limit." \
+		WATCHDOG=1
+	else
+	    /bin/systemd-notify \
+		--status="Watchdog: $n_errors errors > $error_limit limit!"
+	fi
+
+	(( i++ ))
+	(( i = i % interval_sec ))
+	sleep 1
+    done
+}
+
+watchdog &
+
+# shellcheck disable=SC1083
+exec {{ protonvpn }} connect --fastest

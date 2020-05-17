@@ -6,6 +6,7 @@
   vars:
     prefix: /opt/protonvpn-cli
     protonvpn: '{{ prefix }}/bin/protonvpn'
+    protonvpn_watchdog: '{{ prefix }}/bin/protonvpn-watchdog'
 
   tasks:
 
@@ -40,7 +41,14 @@
       template:
         src: templates/protonvpn.service.j2
         dest: /etc/systemd/system/protonvpn.service
-      notify: Restart VPN service
+      notify: Restart VPN service if necessary
+
+    - name: Add VPN service watchdog file
+      template:
+        src: templates/protonvpn-watchdog.j2
+        dest: '{{ protonvpn_watchdog }}'
+        mode: +x
+      notify: Restart VPN service if necessary
 
     - name: Disable OpenVPN service
       service:
@@ -49,13 +57,18 @@
         enabled: no
 
     - name: Enable and Start VPN service
-      service:
+      systemd:
         name: protonvpn
         state: started
         enabled: yes
+        daemon_reload: yes
+      register: just_started
 
   handlers:
-  - name: Restart VPN service
-    service:
-      name: protonvpn
-      state: restarted
+
+    - name: Restart VPN service if necessary
+      systemd:
+        name: protonvpn
+        state: restarted
+        daemon_reload: yes
+      when: not just_started.changed
