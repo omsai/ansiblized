@@ -5,7 +5,7 @@
 watchdog() {
     local errors error_limit error_limit_percent interval_sec i v n_errors
 
-    error_limit_percent=50
+    error_limit_percent=20
 
     interval_sec=$(( WATCHDOG_USEC / 1000000 ))
     # NB: error_limit rounds down any decimal value.
