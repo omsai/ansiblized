@@ -1,5 +1,6 @@
 # Master playbook; only contains other playbooks.
 ---
 
+- import_playbook: security.yaml
 - import_playbook: software.yaml
 - import_playbook: vpn.yaml

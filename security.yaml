@@ -1,0 +1,31 @@
+---
+- name:  Security and memory management
+  hosts: localhost
+
+  tasks:
+
+  - name: Persistent journald logging
+    become: yes
+    lineinfile:
+      path: /etc/systemd/journald.conf
+      line: Storage=persistent
+      regexp: Storage=
+
+  - name: Enable out-of-memory killer
+    become: yes
+    copy:
+      content: |
+        vm.oom_kill_allocating_task = 1
+      dest: /etc/sysctl.d/60-oom-killer.conf
+
+  - name: Query out-of-memory killer
+    become: yes
+    command: sysctl vm.oom_kill_allocating_task
+    changed_when: false
+    register: oom
+
+  - name: Start out-of-memory killer
+    become: yes
+    command: sysctl vm.oom_kill_allocating_task=1
+    when: oom.stdout[-1] | default('0') == '0'
+    check_mode: no
