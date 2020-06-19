@@ -65,6 +65,7 @@
         - emacs-common-non-dfsg
         - htop
         - ncdu
+        - stow
         - syncthing
         - time
         - tree
