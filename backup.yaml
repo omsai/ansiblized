@@ -1,0 +1,43 @@
+---
+- name: Scheduled backups
+  hosts: localhost
+  vars:
+    dirs:
+      - dataset: rpool/home/omsai/Sync
+      - dataset: rpool/home/omsai/corelab1
+    snapshots:
+      - name: keep daily snapshot for 1 week.
+        special_time: daily
+        ttl: 1w
+      - name: keep weekly snapshot for 1 month.
+        special_time: weekly
+        ttl: 1m
+      - name: keep monthly snapshot for 6 months.
+        special_time: monthly
+        ttl: 6m
+
+  tasks:
+
+  - name: Install zfsnap
+    become: yes
+    apt:
+      name: zfsnap
+
+  - name: Schedule snaption cleanup
+    become: yes
+    cron:
+      cron_file: zfsnap
+      user: root
+      name: Delete expired snapshots.
+      job: /usr/sbin/zfSnap -d
+      special_time: daily
+
+  - name: Schedule spanshot creation
+    become: yes
+    cron:
+      cron_file: zfsnap
+      user: root
+      name: '{{ item.0.dataset }} {{ item.1.name }}'
+      job: '/usr/sbin/zfSnap -z -s -S -a {{ item.1.ttl }} {{ item.0.dataset }}'
+      special_time: '{{ item.1.special_time }}'
+    loop: '{{ dirs | product(snapshots) | list }}'
