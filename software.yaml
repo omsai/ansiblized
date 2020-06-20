@@ -68,6 +68,8 @@
         - emacs-common-non-dfsg
         - htop
         - ncdu
+        - rename
+        - rsync
         - stow
         - syncthing
         - time
