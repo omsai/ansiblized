@@ -81,3 +81,15 @@
         - keepassxc
         - podget
         - thunderbird
+
+  - name: Copy Syncthing user service
+    copy:
+      src: /usr/lib/systemd/user/syncthing.service
+      dest: /home/omsai/.config/systemd/user/
+
+  - name: Run Syncthing
+    systemd:
+      name: syncthing.service
+      scope: user
+      enabled: true
+      state: started
