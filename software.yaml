@@ -23,15 +23,18 @@
       id: E19F5F87128899B192B1A2C2AD5F960A256A04AF
 
   - name: Add R source
+    become: yes
     apt_repository:
       repo: deb-src https://cloud.r-project.org/bin/linux/debian buster-cran40/
       filename: r-project
 
   - name: Fetch key for Syncthing source
+    become: yes
     apt_key:
       url: https://syncthing.net/release-key.txt
 
   - name: Add Syncthing source
+    become: yes
     apt_repository:
       repo: deb https://apt.syncthing.net/ syncthing release
       filename: syncthing
