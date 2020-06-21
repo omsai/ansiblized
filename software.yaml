@@ -73,6 +73,7 @@
         - ncdu
         - rename
         - rsync
+        - scdaemon
         - stow
         - syncthing
         - time
