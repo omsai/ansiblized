@@ -6,8 +6,8 @@
       - dataset: rpool/home/omsai/Sync
       - dataset: rpool/home/omsai/corelab1
     snapshots:
-      - name: keep daily snapshot for 1 week.
-        special_time: daily
+      - name: keep hourly snapshot for 1 week.
+        special_time: hourly
         ttl: 1w
       - name: keep weekly snapshot for 1 month.
         special_time: weekly
