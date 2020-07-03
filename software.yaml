@@ -57,6 +57,7 @@
         - biber
         - chktex
         - latexmk
+        - texlive-fonts-extra
         - texlive-latex-extra
         # C++.
         - cppcheck
@@ -91,6 +92,12 @@
     copy:
       src: /usr/lib/systemd/user/syncthing.service
       dest: /home/omsai/.config/systemd/user/
+
+  - name: Syncthing ignore ZFS snapshot directory
+    lineinfile:
+      create: true
+      line: .zfs
+      path: /home/omsai/Sync/.stignore
 
   - name: Run Syncthing
     systemd:
