@@ -52,6 +52,7 @@
         - libssl-dev
         - libxml2-dev
         - pandoc
+        - pandoc-citeproc
         # LaTeX.
         - auctex
         - biber
