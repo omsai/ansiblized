@@ -57,6 +57,7 @@
         - auctex
         - biber
         - chktex
+        - dot2tex
         - latexmk
         - texlive-fonts-extra
         - texlive-latex-extra
