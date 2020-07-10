@@ -89,6 +89,7 @@
         - keepassxc
         - podget
         - thunderbird
+        - xournal
 
   - name: Copy Syncthing user service
     copy:
