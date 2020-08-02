@@ -15,7 +15,7 @@
         name:
           - dialog
           - openvpn
-          - python-pexpect     # For ansible expect module.
+          - python-pexpect      # For ansible expect module.
           - python3-pip
           - python3-setuptools
           - python3-venv
