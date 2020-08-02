@@ -50,6 +50,7 @@
         # R package dependencies.
         - libcurl4-openssl-dev
         - libssl-dev
+        - libv8-dev
         - libxml2-dev
         - pandoc
         - pandoc-citeproc
