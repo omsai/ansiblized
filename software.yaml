@@ -39,6 +39,17 @@
       repo: deb https://apt.syncthing.net/ syncthing release
       filename: syncthing
 
+  - name: Fetch key for Signal source
+    become: yes
+    apt_key:
+      url: https://updates.signal.org/desktop/apt/keys.asc
+
+  - name: Add Signal source
+    become: yes
+    apt_repository:
+      repo: deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main
+      filename: signal-xenial
+
   - name: Install packages
     become: yes
     apt:
@@ -90,6 +101,7 @@
         - inkscape
         - keepassxc
         - podget
+        - signal-desktop
         - thunderbird
         - xournal
 
