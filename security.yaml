@@ -15,7 +15,7 @@
     become: yes
     copy:
       content: |
-        vm.oom_kill_allocating_task = 1
+        vm.oom_kill_allocating_task = 0
       dest: /etc/sysctl.d/60-oom-killer.conf
 
   - name: Query out-of-memory killer
@@ -26,6 +26,6 @@
 
   - name: Start out-of-memory killer
     become: yes
-    command: sysctl vm.oom_kill_allocating_task=1
+    command: sysctl vm.oom_kill_allocating_task=0
     when: oom.stdout[-1] | default('0') == '0'
     check_mode: no
