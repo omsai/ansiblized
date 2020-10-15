@@ -73,6 +73,7 @@
         - latexmk
         - texlive-fonts-extra
         - texlive-latex-extra
+        - texlive-science
         # C++.
         - cppcheck
         - gdb
