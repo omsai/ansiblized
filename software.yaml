@@ -50,6 +50,17 @@
       repo: deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main
       filename: signal-xenial
 
+  - name: Fetch key for Element source
+    become: yes
+    apt_key:
+      url: https://packages.riot.im/debian/riot-im-archive-keyring.gpg
+
+  - name: Add Element source
+    become: yes
+    apt_repository:
+      repo: deb https://packages.riot.im/debian/ default main
+      filename: element
+
   - name: Install packages
     become: yes
     apt:
@@ -95,6 +106,7 @@
         - tree
         - unattended-upgrades
         # Desktop.
+        - element-desktop
         - gtk-redshift
         - gimp
         - hledger
