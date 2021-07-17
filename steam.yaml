@@ -1,0 +1,46 @@
+---
+- name: Install Steam packages
+  hosts: localhost
+
+  tasks:
+
+  - name: Check if i386 architecture present
+    command: dpkg --print-foreign-architectures
+    register: archs
+    changed_when: false
+
+  - name: Add i386 architecture
+    become: yes
+    command: dpkg --add-architecture i386
+    when: archs['stdout'] != 'i386'
+
+  - name: Update i386 packages
+    become: yes
+    command: apt update
+    when: archs['stdout'] != 'i386'
+
+  - name: Install steam
+    become: yes
+    apt:
+      name:
+        # Can fail because one has to interactively agree to Steam's EULA.
+        - steam
+        - nvidia-driver-libs-i386
+
+  # https://wiki.debian.org/Wine#Installation_from_winehq.27s_repo
+  - name: Import the winehq key
+    become: yes
+    apt_key:
+      url: https://dl.winehq.org/wine-builds/winehq.key
+
+  - name: Add winehq source
+    become: yes
+    apt_repository:
+      repo: deb https://dl.winehq.org/wine-builds/debian/ buster main
+      filename: winehq
+      
+  - name: Install wine
+    become: yes
+    apt:
+      name: winehq-stable
+      install_recommends: yes
