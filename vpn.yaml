@@ -27,6 +27,8 @@
         virtualenv_command: /usr/bin/python3 -m venv
         virtualenv: '{{ prefix }}'
         state: latest
+      register: cli
+      notify: Restart VPN service if necessary
 
     - name: Fail if manual configuration is necessary
       expect:
@@ -72,4 +74,4 @@
         name: protonvpn
         state: restarted
         daemon_reload: yes
-      when: not just_started.changed
+      when: cli.changed or not just_started.changed
