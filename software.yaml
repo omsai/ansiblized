@@ -162,4 +162,10 @@
       dest: /etc/modprobe.d/zfs.conf
       content: |
         options zfs zfs_arc_max={{ zfs_max }}
+    register: zfs_conf
     when: '"zfs-zed.service" in ansible_facts.services'
+
+  - name: Apply zfs.conf to initramfs
+    become: yes
+    command: /sbin/update-initramfs -u
+    when: 'zfs_conf.changed'
