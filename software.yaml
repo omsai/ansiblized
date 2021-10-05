@@ -182,6 +182,16 @@
     notify: Restart collectd
     tags: collectd
 
+  - name: Ignore logging ZFS snapshots
+    become: yes
+    lineinfile:
+      path: /etc/collectd/collectd.conf
+      validate: collectd -t %s
+      insertafter: 'FSType cgroup'
+      line: '	MountPoint "snapshot"'
+    notify: Restart collectd
+    tags: collectd
+
   handlers:
 
   - name: Restart collectd
