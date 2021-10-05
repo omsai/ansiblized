@@ -175,6 +175,7 @@
     become: yes
     lineinfile:
       path: /etc/collectd/collectd.conf
+      validate: collectd -t %s
       regexp: '^.*(LoadPlugin zfs_arc)'
       line: '\1'
       backrefs: yes
