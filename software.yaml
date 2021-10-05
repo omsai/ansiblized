@@ -102,6 +102,7 @@
         - rename
         - rsync
         - scdaemon
+        - smem
         - stow
         - syncthing
         - time
