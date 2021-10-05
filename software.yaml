@@ -170,3 +170,22 @@
     become: yes
     command: /sbin/update-initramfs -u
     when: 'zfs_conf.changed'
+
+  - name: Enable collectd zfs_arc plugin
+    become: yes
+    lineinfile:
+      path: /etc/collectd/collectd.conf
+      regexp: '^.*(LoadPlugin zfs_arc)'
+      line: '\1'
+      backrefs: yes
+    notify: Restart collectd
+    tags: collectd
+
+  handlers:
+
+  - name: Restart collectd
+    become: yes
+    service:
+      name: collectd
+      state: restarted
+    tags: collectd
