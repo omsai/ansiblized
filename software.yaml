@@ -116,10 +116,18 @@
         - hplip
         - inkscape
         - keepassxc
-        - podget
         - signal-desktop
         - thunderbird
         - xournal
+
+  # https://github.com/dvehrs/podget/issues/64
+  - name: Install podget with patch for m4a filenames
+    become: yes
+    git:
+      repo: https://github.com/dvehrs/podget.git
+      dest: /opt/podget
+      version: 935d0168a1cbe98bbcd27cd66a3d100533e2dd0d
+    tags: podget
 
   - name: Copy Syncthing user service
     copy:
