@@ -102,6 +102,7 @@
         - rename
         - rsync
         - scdaemon
+        - smem
         - stow
         - syncthing
         - time
@@ -115,10 +116,18 @@
         - hplip
         - inkscape
         - keepassxc
-        - podget
         - signal-desktop
         - thunderbird
         - xournal
+
+  # https://github.com/dvehrs/podget/issues/64
+  - name: Install podget with patch for m4a filenames
+    become: yes
+    git:
+      repo: https://github.com/dvehrs/podget.git
+      dest: /opt/podget
+      version: 935d0168a1cbe98bbcd27cd66a3d100533e2dd0d
+    tags: podget
 
   - name: Copy Syncthing user service
     copy:
@@ -162,4 +171,40 @@
       dest: /etc/modprobe.d/zfs.conf
       content: |
         options zfs zfs_arc_max={{ zfs_max }}
+    register: zfs_conf
     when: '"zfs-zed.service" in ansible_facts.services'
+
+  - name: Apply zfs.conf to initramfs
+    become: yes
+    command: /sbin/update-initramfs -u
+    when: 'zfs_conf.changed'
+
+  - name: Enable collectd zfs_arc plugin
+    become: yes
+    lineinfile:
+      path: /etc/collectd/collectd.conf
+      validate: collectd -t %s
+      regexp: '^.*(LoadPlugin zfs_arc)'
+      line: '\1'
+      backrefs: yes
+    notify: Restart collectd
+    tags: collectd
+
+  - name: Ignore logging ZFS snapshots
+    become: yes
+    lineinfile:
+      path: /etc/collectd/collectd.conf
+      validate: collectd -t %s
+      insertafter: 'FSType cgroup'
+      line: '	MountPoint "snapshot"'
+    notify: Restart collectd
+    tags: collectd
+
+  handlers:
+
+  - name: Restart collectd
+    become: yes
+    service:
+      name: collectd
+      state: restarted
+    tags: collectd
