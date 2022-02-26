@@ -190,13 +190,19 @@
     notify: Restart collectd
     tags: collectd
 
-  - name: Ignore logging ZFS snapshots
+  - name: Allowlist ZFS locations
     become: yes
-    lineinfile:
+    replace:
       path: /etc/collectd/collectd.conf
       validate: collectd -t %s
-      insertafter: 'FSType cgroup'
-      line: '	MountPoint "snapshot"'
+      # This regex pattern replaces the block using non-greedy behavior per
+      # https://stackoverflow.com/a/7124976 and
+      # https://serverfault.com/a/966435
+      regexp: '^<Plugin df>[\s\S]+?(?=</Plugin>)'
+      replace: |
+        <Plugin df>
+        	MountPoint "/home/omsai"
+        	MountPoint "/home/omsai/Sync"
     notify: Restart collectd
     tags: collectd
 
