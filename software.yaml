@@ -3,6 +3,10 @@
   hosts: localhost
   vars:
     zfs_max: 4187689984
+    zfs_dirs:
+      - /home/omsai/Sync
+      - /home/omsai/corelab1
+      - /home/omsai/kirschner-lab
 
   tasks:
 
@@ -134,11 +138,12 @@
       src: /usr/lib/systemd/user/syncthing.service
       dest: /home/omsai/.config/systemd/user/
 
-  - name: Syncthing ignore ZFS snapshot directory
+  - name: Syncthing ignore ZFS snapshot directories
     lineinfile:
       create: true
       line: .zfs
-      path: /home/omsai/Sync/.stignore
+      path: '{{ item }}/.stignore'
+    loop: '{{ zfs_dirs }}'
 
   - name: Run Syncthing
     systemd:
