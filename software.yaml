@@ -83,7 +83,7 @@
         - unattended-upgrades
         # Desktop.
         - element-desktop
-        - gtk-redshift
+        - redshift-gtk
         - gimp
         - hledger
         - hplip
