@@ -10,18 +10,6 @@
 
   tasks:
 
-  - name: Fetch key for R source
-    become: yes
-    apt_key:
-      keyserver: keys.gnupg.net
-      id: E19F5F87128899B192B1A2C2AD5F960A256A04AF
-
-  - name: Add R source
-    become: yes
-    apt_repository:
-      repo: deb https://cran.case.edu/bin/linux/debian buster-cran40/
-      filename: r-project
-
   - name: Fetch key for Syncthing source
     become: yes
     apt_key:
@@ -59,15 +47,6 @@
     become: yes
     apt:
       name:
-        # Scientific software.
-        - r-base-dev
-        # R package dependencies.
-        - libcurl4-openssl-dev
-        - libssl-dev
-        - libv8-dev
-        - libxml2-dev
-        - pandoc
-        - pandoc-citeproc
         # LaTeX.
         - auctex
         - biber

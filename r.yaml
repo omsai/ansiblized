@@ -1,0 +1,33 @@
+---
+- name: Install R and R package system dependencies
+  hosts: localhost
+
+  tasks:
+
+  - name: Fetch key for R source
+    become: yes
+    apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: 95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7
+
+  - name: Add R source
+    become: yes
+    apt_repository:
+      repo: >-
+        deb https://cran.case.edu/bin/linux/debian
+        {{ ansible_facts.distribution_release }}-cran40/
+      filename: r-project
+
+  - name: Install packages
+    become: yes
+    apt:
+      name:
+        # The top-level R installation package.
+        - r-base-dev
+        # Dependencies for R packages.
+        - libcurl4-openssl-dev
+        - libssl-dev
+        - libv8-dev
+        - libxml2-dev
+        - pandoc
+        - pandoc-citeproc
