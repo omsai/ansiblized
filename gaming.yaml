@@ -1,0 +1,77 @@
+---
+- name: Install nvidia, steam, wine, and lutris
+  hosts: localhost
+
+  tasks:
+
+  - name: Add non-free source
+    become: yes
+    replace:
+      path: /etc/apt/sources.list
+      regexp: '^deb(.*) {{ ansible_facts.distribution_release }} main contrib$'
+      replace: 'deb\1 {{ ansible_facts.distribution_release }} main contrib non-free'
+
+  - name: Add backports non-free source
+    become: yes
+    blockinfile:
+      path: /etc/apt/sources.list
+      block: |
+
+        # Enable non-free backports for proprietary nvidia drivers.
+        deb http://deb.debian.org/debian {{ ansible_facts.distribution_release }}-backports main contrib non-free
+        deb-src http://deb.debian.org/debian {{ ansible_facts.distribution_release }}-backports main contrib non-free
+
+  - name: Check if i386 architecture present
+    command: dpkg --print-foreign-architectures
+    register: archs
+    changed_when: false
+
+  - name: Add i386 architecture
+    become: yes
+    command: dpkg --add-architecture i386
+    when: archs['stdout'] != 'i386'
+
+  - name: Update i386 packages
+    become: yes
+    apt:
+      update_cache: yes
+    when: archs['stdout'] != 'i386'
+
+  - name: Install nvidia drivers
+    become: yes
+    apt:
+      name:
+        - nvidia-driver
+        # - nvidia-driver-libs-i386
+      default_release: '{{ ansible_facts.distribution_release }}-backports'
+      update_cache: yes
+
+  - name: Install steam
+    become: yes
+    apt:
+      # This fails because one has to interactively agree to Steam's EULA.
+      name: steam
+      update_cache: yes
+
+  # https://wiki.debian.org/Wine#Installation_from_winehq.27s_repo
+  - name: Import the winehq key
+    become: yes
+    apt_key:
+      url: https://dl.winehq.org/wine-builds/winehq.key
+
+  - name: Add winehq source
+    become: yes
+    apt_repository:
+      repo: deb https://dl.winehq.org/wine-builds/debian/ buster main
+      filename: winehq
+
+  - name: Install wine
+    become: yes
+    apt:
+      name: winehq-stable
+      install_recommends: yes
+
+  - name: Install lutris
+    become: yes
+    apt:
+      name: lutris
