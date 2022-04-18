@@ -7,6 +7,7 @@
       - /home/omsai/Sync
       - /home/omsai/corelab1
       - /home/omsai/kirschner-lab
+    signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
 
   tasks:
 
@@ -25,12 +26,15 @@
     become: yes
     apt_key:
       url: https://updates.signal.org/desktop/apt/keys.asc
+      keyring: '{{ signal_keyring }}'
 
   - name: Add Signal source
     become: yes
     apt_repository:
-      repo: deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main
-      filename: signal-xenial
+      repo: >-
+        deb [arch=amd64 signed-by={{ signal_keyring }}]
+        https://updates.signal.org/desktop/apt xenial main
+      filename: signal
 
   - name: Fetch key for Element source
     become: yes
