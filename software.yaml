@@ -10,18 +10,6 @@
 
   tasks:
 
-  - name: Fetch key for Ansible source
-    become: yes
-    apt_key:
-      keyserver: keyserver.ubuntu.com
-      id: 93C4A3FD7BB9C367
-
-  - name: Add Ansible source
-    become: yes
-    apt_repository:
-      repo: deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main
-      filename: ansible
-
   - name: Fetch key for R source
     become: yes
     apt_key:
@@ -71,8 +59,6 @@
     become: yes
     apt:
       name:
-        - ansible
-        - ansible-lint
         # Scientific software.
         - r-base-dev
         # R package dependencies.

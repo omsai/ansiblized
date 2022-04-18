@@ -1,0 +1,61 @@
+---
+- name: Install Ansible packages
+  hosts: localhost
+  vars:
+    # The Debian-to-Ubuntu codename table is in the Ansible docs:
+    # https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html#installing-ansible-on-debian
+    debian_to_ubuntu_codename:
+      jessie: trusty
+      stretch: xenial
+      buster: bionic
+      bullseye: focal
+
+  tasks:
+
+  - name: Check whether this distribution is supported
+    fail:
+      msg: Not a Debian or Ubuntu distribution
+    when: not(ansible_facts.distribution in ['Debian', 'Ubuntu'])
+
+  # First assume we're running a Debian system and therefore query the
+  # Debian-to-Ubuntu codename, and fallback to assuming an Ubuntu
+  # system and therefore using the Ubuntu release.
+  - name: Lookup distribution codename
+    set_fact:
+      codename: >-
+        {{
+        debian_to_ubuntu_codename[ansible_facts.distribution_release] |
+        default(ansible_facts.distribution_release)
+        }}
+
+  - name: Peek at codename
+    debug:
+      msg:
+        - 'Distribution: {{ ansible_facts.distribution }}'
+        - 'Release: {{ ansible_facts.distribution_release }}'
+        - 'Codename: {{ codename }}'
+
+  - name: Fetch key for Ansible source
+    become: yes
+    apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: 93C4A3FD7BB9C367
+
+  - name: Add Ansible source
+    become: yes
+    apt_repository:
+      repo: 'deb http://ppa.launchpad.net/ansible/ansible/ubuntu {{ codename }} main'
+      filename: ansible
+
+  # NB: After running the playbook, one has to remove the older Debian
+  # version of ansible and run autoremove before installing the newer
+  # Ubuntu versions from the Ansible source.  Although there may be an
+  # apt command to determine the source for a package to apply this in
+  # Ansible itself, for now now has to manually remove + autoremove
+  # Debian's Ansible and reinstall the newer Ubuntu versions.
+  - name: Install packages
+    become: yes
+    apt:
+      name:
+        - ansible
+        - ansible-lint
