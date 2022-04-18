@@ -1,6 +1,6 @@
 # https://github.com/ProtonVPN/linux-cli
 
-- name: Install VPN
+- name: Install VPN CLI and watchdog
   hosts: localhost
   become: true
   vars:

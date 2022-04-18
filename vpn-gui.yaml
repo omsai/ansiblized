@@ -1,0 +1,18 @@
+# https://protonvpn.com/support/official-linux-vpn-debian/
+
+- name: Install VPN GUI
+  hosts: localhost
+  become: true
+
+  tasks:
+
+  - name: Install protonvpn repo
+    apt:
+      deb: https://protonvpn.com/download/protonvpn-stable-release_1.0.1-1_all.deb
+      allow_downgrade: false
+
+  # No need to install the GNOME shell packages for Xfce.
+  - name: Install protonvpn
+    apt:
+      name: protonvpn
+      update_cache: true
