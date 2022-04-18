@@ -1,0 +1,75 @@
+---
+- name: Install Debian packages
+  hosts: localhost
+  vars:
+    zfs_max: 4187689984
+
+  tasks:
+
+  - name: Detect running services
+    service_facts:
+    register: services
+
+  - name: Detect ZFS c_max
+    shell:
+      cmd: sed -nr 's/^c_max .* ([[:digit:]]+)$/\1/p' /proc/spl/kstat/zfs/arcstats
+      warn: false
+    changed_when: false
+    register: c_max
+    when: '"zfs-zed.service" in ansible_facts.services'
+
+  - name: ZFS set current c_max
+    become: yes
+    shell:
+      cmd: 'echo {{ zfs_max }} > /sys/module/zfs/parameters/zfs_arc_max'
+    when: '"zfs-zed.service" in ansible_facts.services and c_max.stdout | int != zfs_max'
+
+  - name: ZFS set persistent c_max
+    become: yes
+    copy:
+      dest: /etc/modprobe.d/zfs.conf
+      content: |
+        options zfs zfs_arc_max={{ zfs_max }}
+    register: zfs_conf
+    when: '"zfs-zed.service" in ansible_facts.services'
+
+  - name: Apply zfs.conf to initramfs
+    become: yes
+    command: /sbin/update-initramfs -u
+    when: 'zfs_conf.changed'
+
+  - name: Enable collectd zfs_arc plugin
+    become: yes
+    lineinfile:
+      path: /etc/collectd/collectd.conf
+      validate: collectd -t %s
+      regexp: '^.*(LoadPlugin zfs_arc)'
+      line: '\1'
+      backrefs: yes
+    notify: Restart collectd
+    tags: collectd
+
+  - name: Allowlist ZFS locations
+    become: yes
+    replace:
+      path: /etc/collectd/collectd.conf
+      validate: collectd -t %s
+      # This regex pattern replaces the block using non-greedy behavior per
+      # https://stackoverflow.com/a/7124976 and
+      # https://serverfault.com/a/966435
+      regexp: '^<Plugin df>[\s\S]+?(?=</Plugin>)'
+      replace: |
+        <Plugin df>
+        	MountPoint "/home/omsai"
+        	MountPoint "/home/omsai/Sync"
+    notify: Restart collectd
+    tags: collectd
+
+  handlers:
+
+  - name: Restart collectd
+    become: yes
+    service:
+      name: collectd
+      state: restarted
+    tags: collectd
