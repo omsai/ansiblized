@@ -3,10 +3,6 @@
   hosts: localhost
   vars:
     zfs_max: 4187689984
-    zfs_dirs:
-      - /home/omsai/Sync
-      - /home/omsai/corelab1
-      - /home/omsai/kirschner-lab
     signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
 
   tasks:
@@ -107,13 +103,6 @@
     copy:
       src: /usr/lib/systemd/user/syncthing.service
       dest: /home/omsai/.config/systemd/user/
-
-  - name: Syncthing ignore ZFS snapshot directories
-    lineinfile:
-      create: true
-      line: .zfs
-      path: '{{ item }}/.stignore'
-    loop: '{{ zfs_dirs }}'
 
   - name: Run Syncthing
     systemd:

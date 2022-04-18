@@ -19,6 +19,14 @@
 
   tasks:
 
+  - name: Syncthing ignore ZFS snapshot directories
+    lineinfile:
+      create: true
+      line: .zfs
+      path: '{{ item.dataset | replace("rpool", "") }}/.stignore'
+    loop: '{{ dirs }}'
+    tags: syncthing-ignore-zfs
+
   - name: Install zfsnap
     become: yes
     apt:
