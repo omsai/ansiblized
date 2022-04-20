@@ -89,6 +89,14 @@
         - thunderbird
         - xournal
 
+  - name: Install bluetooth audio
+    become: yes
+    apt:
+      name: pulseaudio-module-bluetooth
+    register: bluetooth
+    notify: Restart pulseaudio
+    tags: bluetooth
+
   # https://github.com/dvehrs/podget/issues/64
   - name: Install podget with patch for m4a filenames
     become: yes
@@ -109,3 +117,11 @@
       scope: user
       enabled: true
       state: started
+
+  handlers:
+
+  - name: Restart pulseaudio
+    shell: |
+      pulseaudio --kill && pulseaudio --start
+    when: bluetooth.changed
+    tags: bluetooth
