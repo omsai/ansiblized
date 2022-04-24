@@ -1,0 +1,23 @@
+---
+- name: Install python pip to user local directory
+  hosts: localhost
+  vars:
+    get_pip: /tmp/get_pip.py
+
+  tasks:
+
+  - name: Check if the pip module is installed
+    command: python3 -m pip -V
+    failed_when: false
+    changed_when: false
+    register: pip_installed
+
+  - name: Download get_pip.py
+    get_url:
+      url: https://bootstrap.pypa.io/get-pip.py
+      dest: '{{ get_pip }}'
+    when: pip_installed.rc != 0
+
+  - name: Run get_pip.py install --user
+    command: 'python3 {{ get_pip }} install --user'
+    when: pip_installed.rc != 0
