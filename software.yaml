@@ -122,6 +122,6 @@
 
   - name: Restart pulseaudio
     shell: |
-      pulseaudio --kill && pulseaudio --start
+      pulseaudio --kill && sleep 10 && pulseaudio --start
     when: bluetooth.changed
     tags: bluetooth
