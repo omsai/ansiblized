@@ -1,5 +1,5 @@
 ---
-- name: Install Debian packages
+- name: Configure ZFS ARC memory and ZFS dataset disk space logging
   hosts: localhost
   vars:
     zfs_max: 4187689984
