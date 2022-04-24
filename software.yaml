@@ -92,7 +92,10 @@
   - name: Install bluetooth audio
     become: yes
     apt:
-      name: pulseaudio-module-bluetooth
+      name:
+        - pulseaudio-module-bluetooth
+        # Taskbar graphical utility.
+        - blueman
     register: bluetooth
     notify: Restart pulseaudio
     tags: bluetooth
