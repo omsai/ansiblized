@@ -19,6 +19,136 @@
 
   tasks:
 
+  # If the query directory does not exist, it's probably been renamed
+  # and interrupted from being synchronized to the newly created ZFS
+  # dataset.
+  - name: Check whether directories exist
+    stat:
+      path: '{{ item.dataset | replace("rpool", "") }}'
+    loop: '{{ dirs }}'
+    register: stat
+    tags: migrate
+
+  # Add the is_dataset key to dirs.
+  - name: Register directories that exist
+    ansible.utils.update_fact:
+      updates:
+      - path: 'dirs[{{ ansible_loop.index0 }}].dir_exists'
+        value: '{{ item }}'
+      - path: 'dirs[{{ ansible_loop.index0 }}].is_dataset'
+        value: '{{ item | ternary(none, false) }}'
+      - path: 'dirs[{{ ansible_loop.index0 }}].dir'
+        value: '{{ dirs[ansible_loop.index0].dataset | replace("rpool", "") }}'
+    loop_control:
+      extended: yes
+    loop: >
+      {{
+      stat.results |
+      map(attribute = "stat") |
+      map(attribute = "exists")
+      }}
+    changed_when: false
+    register: updated
+    tags: migrate
+
+  - name: Update dirs fact
+    set_fact:
+      dirs: '{{ "dirs" | extract(updated.results | last) }}'
+    tags: migrate
+
+  # If the query directory is not a dataset, the returned "mountpoint"
+  # is another dataset containing the query directory, rather than an
+  # exact match of the query directory.
+  - name: Confirm whether directories are snapshottable ZFS datasets
+    zfs_facts:
+      name: '{{ item.dataset | replace("rpool", "") }}'
+    loop_control:
+      extended: yes
+    loop: '{{ dirs }}'
+    when: item.is_dataset != false
+    register: zfs_facts
+    tags: migrate
+
+  - name: Register ZFS mountpoints from queried directories
+    ansible.utils.update_fact:
+      updates:
+      - path: 'dirs[{{ item.ansible_loop.index0 }}].is_dataset'
+        value: >-
+          {{
+          item | json_query("ansible_facts.ansible_zfs_datasets[0].mountpoint")
+          == dirs[item.ansible_loop.index0].dir
+          }}
+    loop: '{{ zfs_facts.results }}'
+    when: item | map(attribute = "ansible_facts.ansible_zfs_datasets.0.mountpoint")
+    changed_when: false
+    register: updated
+    tags: migrate
+
+  - name: Update dirs fact
+    set_fact:
+      dirs: '{{ "dirs" | extract(updated.results | last) }}'
+    tags: migrate
+
+  - name: Disable Syncthing before migrating any non-ZFS directories
+    systemd:
+      name: syncthing.service
+      scope: user
+      enabled: false
+      state: stopped
+    when: 'false in dirs | map(attribute = "is_dataset")'
+    tags: migrate
+
+  - name: Rename any non-ZFS directories before migration
+    command: >
+      mv 
+      {{ item.dataset | replace("rpool", "") }}
+      {{ item.dataset | replace("rpool", "") }}-nonzfs
+    args:
+      removes: '{{ item.dataset | replace("rpool", "") }}'
+      creates: '{{ item.dataset | replace("rpool", "") }}-nonzfs'
+    loop: '{{ dirs | rejectattr("is_dataset") }}'
+    tags: migrate
+    
+  - name: Create datasets for any non-ZFS directories
+    become: yes
+    zfs:
+      name: '{{ item.dataset }}'
+      state: present
+    loop: '{{ dirs }}'
+    tags: migrate
+
+  - name: Change ownership of datasets to original directories
+    become: yes
+    file:
+      path: '{{ item.dir }}'
+      owner: omsai
+      group: omsai
+    loop: '{{ dirs | rejectattr("is_dataset") }}'
+    tags: migrate
+
+  - name: Migrate any non-ZFS to ZFS directories
+    become: true
+    synchronize:
+      src: '{{ item.dir }}-nonzfs/'
+      dest: '{{ item.dir }}'
+    loop: '{{ dirs | rejectattr("is_dataset") }}'    
+    tags: migrate
+
+  - name: Remove migrated non-ZFS directories
+    file:
+      path: '{{ item.dir }}-nonzfs'
+      state: absent
+    loop: '{{ dirs }}'
+    tags: migrate
+
+  - name: Re-enable Syncthing after migrating non-ZFS directories
+    systemd:
+      name: syncthing.service
+      scope: user
+      enabled: true
+      state: started
+    tags: migrate
+
   - name: Syncthing ignore ZFS snapshot directories
     lineinfile:
       create: true
