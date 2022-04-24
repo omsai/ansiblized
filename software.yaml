@@ -78,6 +78,7 @@
         - unattended-upgrades
         # Desktop.
         - element-desktop
+        - evince
         - redshift-gtk
         - gimp
         - hledger
