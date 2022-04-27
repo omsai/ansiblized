@@ -63,6 +63,7 @@
         - valgrind
         # Development.
         - emacs
+        - emacs-common-non-dfsg
         - shellcheck
         # Utilities.
         - collectd
