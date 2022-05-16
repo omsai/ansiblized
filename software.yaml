@@ -48,10 +48,12 @@
     apt:
       name:
         # LaTeX.
+        - asciidoc              # for git-latexdiff
         - auctex
         - biber
         - chktex
         - dot2tex
+        - latexdiff
         - latexmk
         - texlive-fonts-extra
         - texlive-latex-extra
@@ -102,6 +104,20 @@
     register: bluetooth
     notify: Restart pulseaudio
     tags: bluetooth
+
+  - name: Install git-latexdiff
+    become: yes
+    shell:
+      chdir: /tmp
+      cmd: |
+        wget https://gitlab.com/git-latexdiff/git-latexdiff/-/archive/1.6.0/git-latexdiff-1.6.0.tar.bz2
+        tar -xf git-latexdiff-1.6.0.tar.bz2
+        cd git-latexdiff-1.6.0
+        make GIT_LATEXDIFF_VERSION=1.6.0 install
+        cd ..
+        rm -r git-latexdiff-1.6.0 git-latexdiff-1.6.0.tar.bz2
+      creates: /usr/lib/git-core/git-latexdiff
+    tags: git-latexdiff
 
   # https://github.com/dvehrs/podget/issues/64
   - name: Install podget with patch for m4a filenames
