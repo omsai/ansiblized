@@ -114,6 +114,8 @@
     zfs:
       name: '{{ item.dataset }}'
       state: present
+      extra_zfs_properties:
+        canmount: off
     loop: '{{ dirs }}'
     tags: migrate
 
