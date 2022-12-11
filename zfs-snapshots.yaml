@@ -115,9 +115,11 @@
       name: '{{ item.dataset }}'
       state: present
       extra_zfs_properties:
-        canmount: off
+        canmount: on
     loop: '{{ dirs }}'
-    tags: migrate
+    tags:
+      - migrate
+      - mountable
 
   - name: Change ownership of datasets to original directories
     become: yes
