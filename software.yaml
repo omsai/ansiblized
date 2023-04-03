@@ -3,7 +3,7 @@
   hosts: localhost
   vars:
     signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
-    podget_host: xm1
+    podget_host: xm2
 
   tasks:
 
@@ -141,7 +141,9 @@
       hour: 10
       minute: 5
       disabled: '{{ ansible_facts.hostname != podget_host }}'
-    tags: podget
+    tags:
+      - podget
+      - podget-host
 
   - name: Copy Syncthing user service
     copy:
