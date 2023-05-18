@@ -2,6 +2,7 @@
 - name: Install Debian packages
   hosts: localhost
   vars:
+    element_keyring: /usr/share/keyrings/element-io-archive-keyring.gpg
     signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
     podget_host: xm2
 
@@ -35,13 +36,16 @@
   - name: Fetch key for Element source
     become: yes
     apt_key:
-      url: https://packages.riot.im/debian/riot-im-archive-keyring.gpg
+      url: https://packages.element.io/debian/element-io-archive-keyring.gpg‍
+      keyring: '{{ element_keyring }}'
 
   - name: Add Element source
     become: yes
     apt_repository:
-      repo: deb https://packages.riot.im/debian/ default main
-      filename: element
+      repo: >-
+        deb [signed-by={{ element_keyring }}]
+        https://packages.element.io/debian/ default main
+      filename: element-io
 
   - name: Install packages
     become: yes
