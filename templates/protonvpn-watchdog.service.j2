@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+[Unit]
+Description=ProtonVPN-CLI auto-reconnect
+Wants=network-online.target
+
+[Service]
+Type=forking
+NotifyAccess=all
+ExecStart={{ pcli_watchdog }}
+WatchdogSec=30
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
