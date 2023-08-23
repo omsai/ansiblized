@@ -184,3 +184,25 @@
       job: '/usr/sbin/zfSnap -z -s -S -a {{ item.1.ttl }} {{ item.0.dataset }}'
       special_time: '{{ item.1.special_time }}'
     loop: '{{ dirs | product(snapshots) | list }}'
+
+  # Confirm these settings have been applied with `sudo NetworkManager
+  # --print-config`
+  - name: Always retry lost network connections
+    become: yes
+    community.general.ini_file:
+      path: /etc/NetworkManager/conf.d/reconnect.conf
+      section: '{{ item.section }}'
+      option: '{{ item.option }}'
+      value: '{{ item.value }}'
+    loop:
+      # Reconnect indefinitely.
+      - section: main
+        option: autoconnect-retries-default
+        value: 0
+      # Disable MAC address randomization to workaround error in NetworkManager
+      # journalctl logs "state change: config -> failed (reason: 'no-secrets',
+      # sys-iface-state: 'managed')" per
+      # https://unix.stackexchange.com/a/519620
+      - section: device
+        option: wifi.scan-rand-mac-address
+        value: 'no'
