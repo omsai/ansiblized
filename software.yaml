@@ -142,8 +142,8 @@
     cron:
       name: podget
       job: /opt/podget/podget -s
-      hour: 10
-      minute: 5
+      hour: '10'
+      minute: '5'
       disabled: '{{ ansible_facts.hostname != podget_host }}'
     tags:
       - podget
