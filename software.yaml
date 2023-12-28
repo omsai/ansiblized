@@ -141,7 +141,7 @@
   - name: Install podget cron job
     cron:
       name: podget
-      job: /opt/podget/podget -s
+      job: /home/omsai/Sync/apps/podget/podget-with-ads
       hour: '10'
       minute: '5'
       disabled: '{{ ansible_facts.hostname != podget_host }}'
