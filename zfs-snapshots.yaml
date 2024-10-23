@@ -6,6 +6,7 @@
       - dataset: rpool/home/omsai/Sync
       - dataset: rpool/home/omsai/corelab1
       - dataset: rpool/home/omsai/kirschner-lab
+      - dataset: rpool/home/omsai/shoemaker-lab
     snapshots:
       - name: keep hourly snapshot for 1 week.
         special_time: hourly
