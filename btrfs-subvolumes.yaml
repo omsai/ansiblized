@@ -1,0 +1,49 @@
+- name: Create BTRFS subvolumes and mount points
+  hosts: localhost
+  vars:
+    btrfs_label: home
+    mount_prefix: ''
+    btrfs_subvolume_path:
+      # Order here affects mount order.
+      - subvolume: /@snapshots
+        path: /.snapshots
+      - subvolume: /@home/@pan79
+        path: /home/pan79
+      - subvolume: /@home/@pan79/shoemaker-lab
+        path: /home/pan79/shoemaker-lab
+
+  tasks:
+
+  - name: Create BTRFS subvolumes
+    community.general.btrfs_subvolume:
+      name: '{{ item.subvolume }}'
+      filesystem_label: '{{ btrfs_label }}'
+      recursive: true
+      automount: true
+    become: true
+    loop: '{{ btrfs_subvolume_path }}'
+
+  - name: Mount BTRFS subvolumes
+    ansible.posix.mount:
+      src: 'LABEL={{ btrfs_label }}'
+      path: '{{ mount_prefix }}{{ item.path }}'
+      state: mounted
+      fstype: btrfs
+      opts: 'defaults,X-mount.mkdir,compress=zstd,nodiscard,noatime,subvol={{ item.subvolume }}'
+    become: true
+    loop: '{{ btrfs_subvolume_path }}'
+
+  # - name: Set /@home/@user directory permissions
+  #   ansible.builtin.debug:
+  #     msg: >-
+  #       {{
+  #       btrfs_subvolume_path |
+  #       map(attribute="path") |
+  #       map("regex_search", "^/home/([^.][^/]*)$")  |
+  #       map("regex_replace", "^/home/(.+)$", "\1")
+  #       }}
+  #   tags:
+  #   - debug
+    
+  # - name: Create users
+  # - name: Enable snapshots

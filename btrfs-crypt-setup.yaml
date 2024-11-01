@@ -1,0 +1,53 @@
+- name: Create encrypted disk with BTRFS filesystem
+  hosts: localhost
+  vars:
+    btrfs_label: home
+    crypt_name: crypthome
+    crypt_device: /dev/sda1
+    crypt_cypher: aes-xts-plain64
+    crypt_hash: sha256
+  vars_prompt:
+    - name: luks_passphrase
+      prompt: Enter the LUKS passphrase for the BTRFS partition
+
+  tasks:
+
+    # sudo cryptsetup luksFormat --type luks2 --cipher aes-xts-plain64 --hash sha256 /dev/sda1
+
+  - name: Open existing LUKS container with passphrase
+    community.crypto.luks_device:
+      name: '{{ crypt_name }}'
+      state: opened
+      device: '{{ crypt_device }}'
+      # Cannot reliably use the UUID below instead of /dev/sda1, because once
+      # the encrypted container is opened the UUID changes and so using the
+      # invalid UUID will instead erroneously try to open the next most similar
+      # UUID.
+      #
+      # uuid: 3A1CFA351CF9EBAF
+      type: luks2
+      passphrase: '{{ luks_passphrase }}'
+      cipher: '{{ crypt_cypher }}'
+      hash: '{{ crypt_hash }}'
+      persistent: true
+    become: true
+
+  - name: Unlock and mount at boot with /etc/crypttab
+    community.general.crypttab:
+      name: '{{ crypt_name }}'
+      state: present
+      opts: luks
+      backing_device: '{{ crypt_device }}'
+    become: true
+
+  - name: Install systemd-cryptsetup to unlock /etc/crypttab at boot
+    ansible.builtin.apt:
+      name: systemd-cryptsetup
+    become: true
+
+  - name: Format as BTRFS with dup data block profile
+    community.general.filesystem:
+      dev: '/dev/mapper/{{ crypt_name }}'
+      fstype: btrfs
+      opts: '--label {{ btrfs_label }} --data dup --nodiscard'
+    become: true
