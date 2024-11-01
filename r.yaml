@@ -34,26 +34,4 @@
         - pandoc
         - pandoc-citeproc
 
-  - name: Query name and e-mail from git config
-    git_config:
-      list_all: yes
-    register: git
-    tags: rprofile
 
-  - name: Install Rprofile
-    copy:
-      content: |
-        local({
-            options(
-                ## Increase download timeout for Bioconductor genomes.
-                timeout = 3600,
-                ## Parallelize package installation.
-                Ncpus = parallel::detectCores(),
-                ## Package authorship.
-                devtools.name = "{{ git.config_values['user.name'] }}",
-                devtools.desc.author = "{{ git.config_values['user.name'] }} <{{ git.config_values['user.email'] }}> [aut, cre] (<https://orcid.org/0000-0001-9726-4552>)"
-            )
-        })
-      dest: ~/.Rprofile
-      validate: Rscript --vanilla %s
-    tags: rprofile
