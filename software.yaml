@@ -4,6 +4,7 @@
   vars:
     element_keyring: /usr/share/keyrings/element-io-archive-keyring.gpg
     signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
+    syncthing_keyring: /etc/apt/trusted.gpg.d/syncthing-archive-keyring.gpg
     podget_host: xm2
 
   tasks:
@@ -11,13 +12,20 @@
   - name: Fetch key for Syncthing source
     become: yes
     apt_key:
-      url: https://syncthing.net/release-key.txt
+      url: https://syncthing.net/release-key.gpg
+      keyring: '{{ syncthing_keyring }}'
+    tags:
+    - syncthing
 
   - name: Add Syncthing source
     become: yes
     apt_repository:
-      repo: deb https://apt.syncthing.net/ syncthing release
+      repo: >-
+        deb [signed-by={{ syncthing_keyring }}]
+        https://apt.syncthing.net/ syncthing stable
       filename: syncthing
+    tags:
+    - syncthing
 
   - name: Fetch key for Signal source
     become: yes
