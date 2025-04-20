@@ -5,7 +5,7 @@
     element_keyring: /usr/share/keyrings/element-io-archive-keyring.gpg
     signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
     syncthing_keyring: /etc/apt/trusted.gpg.d/syncthing-archive-keyring.gpg
-    podget_host: xm2
+    podget_host: xm1
 
   tasks:
 
@@ -149,7 +149,7 @@
   - name: Install podget cron job
     cron:
       name: podget
-      job: /home/omsai/Sync/apps/podget/podget-with-ads
+      job: /opt/podget/podget -s
       hour: '10'
       minute: '5'
       disabled: '{{ ansible_facts.hostname != podget_host }}'
