@@ -32,18 +32,3 @@
       opts: 'defaults,X-mount.mkdir,compress=zstd,nodiscard,noatime,subvol={{ item.subvolume }}'
     become: true
     loop: '{{ btrfs_subvolume_path }}'
-
-  # - name: Set /@home/@user directory permissions
-  #   ansible.builtin.debug:
-  #     msg: >-
-  #       {{
-  #       btrfs_subvolume_path |
-  #       map(attribute="path") |
-  #       map("regex_search", "^/home/([^.][^/]*)$")  |
-  #       map("regex_replace", "^/home/(.+)$", "\1")
-  #       }}
-  #   tags:
-  #   - debug
-    
-  # - name: Create users
-  # - name: Enable snapshots
