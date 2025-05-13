@@ -11,6 +11,8 @@
         path: /home/pan79
       - subvolume: /@home/@pan79/shoemaker-lab
         path: /home/pan79/shoemaker-lab
+      - subvolume: /@home/@lxd
+        path: /home/lxd
 
   tasks:
 
