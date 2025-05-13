@@ -4,20 +4,28 @@
   vars:
     element_keyring: /usr/share/keyrings/element-io-archive-keyring.gpg
     signal_keyring: /etc/apt/trusted.gpg.d/signal-desktop-keyring.gpg
-    podget_host: xm2
+    syncthing_keyring: /etc/apt/trusted.gpg.d/syncthing-archive-keyring.gpg
+    podget_host: xm1
 
   tasks:
 
   - name: Fetch key for Syncthing source
     become: yes
     apt_key:
-      url: https://syncthing.net/release-key.txt
+      url: https://syncthing.net/release-key.gpg
+      keyring: '{{ syncthing_keyring }}'
+    tags:
+    - syncthing
 
   - name: Add Syncthing source
     become: yes
     apt_repository:
-      repo: deb https://apt.syncthing.net/ syncthing release
+      repo: >-
+        deb [signed-by={{ syncthing_keyring }}]
+        https://apt.syncthing.net/ syncthing stable
       filename: syncthing
+    tags:
+    - syncthing
 
   - name: Fetch key for Signal source
     become: yes
@@ -141,7 +149,7 @@
   - name: Install podget cron job
     cron:
       name: podget
-      job: /home/omsai/Sync/apps/podget/podget-with-ads
+      job: /opt/podget/podget -s
       hour: '10'
       minute: '5'
       disabled: '{{ ansible_facts.hostname != podget_host }}'
