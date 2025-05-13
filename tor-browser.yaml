@@ -1,0 +1,25 @@
+# Address Tor Browser banner warning on Ubuntu:
+#
+#   Some of Tor Browser's security features may offer less protection on your
+#   current operating system.  How to fix this issue:
+#   https://support.mozilla.org/en-US/kb/install-firefox-linux?as=u&utm_source=inproduct#w_security-features-warning
+
+- name: Create AppArmor profile for Tor Browser
+  hosts: localhost
+
+  tasks:
+
+    - name: Write AppArmor profile for Tor Browser
+      become: yes
+      ansible.builtin.template:
+        src: templates/firefox-local.j2
+        dest: /etc/apparmor.d/firefox-local
+      register: profile
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Restart AppArmor service
+      become: yes
+      ansible.builtin.systemd_service:
+        name: apparmor
+        state: restarted
+      when: 'profile.changed'
