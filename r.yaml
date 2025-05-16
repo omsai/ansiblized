@@ -63,6 +63,7 @@
         - libfontconfig1-dev
         - libfreetype6-dev
         - libfribidi-dev
+        - libglpk-dev
         - libharfbuzz-dev
         - libjpeg-dev
         - libpng-dev
@@ -71,6 +72,7 @@
         - libv8-dev
         - libxml2-dev
         - pandoc
+    tags: apt
 
   - name: Install obsolete packages if necessary
     become: yes
