@@ -1,0 +1,50 @@
+---
+- name: Install quarto and package system dependencies
+  hosts: localhost
+
+  tasks:
+
+  - name: Query system packages for current version of quarto
+    ansible.builtin.package_facts:
+      manager: apt
+
+  # Suggested by https://stackoverflow.com/a/50967391
+  - name: Determine latest quarto release using GitHub API
+    ansible.builtin.uri:
+      url: https://api.github.com/repos/quarto-dev/quarto-cli/releases/latest
+      return_content: true
+    register: gh_json
+
+  - name: Extract GitHub current release quarto version and download URL
+    set_fact:
+      # Remove the leading "v" from the release tag to compare with the
+      # installed version.
+      quarto_remote: |-
+        {{ gh_json.json.tag_name[1:] }}
+      quarto_remote_url: |-
+        {{
+        gh_json.json |
+        community.general.json_query('assets[*].browser_download_url') |
+        map('regex_search', '.+amd64.deb$') |
+        community.general.json_query('[]') |
+        first
+        }}
+      quarto_installed: |-
+        {{
+        ansible_facts.packages['quarto'] |
+        default([{'version': ''}]) |
+        first |
+        community.general.json_query('version')
+        }}
+
+  - name: Upgrade if quarto versions differ
+    become: yes
+    apt:
+      deb: '{{ quarto_remote_url }}'
+    when: 'quarto_installed != quarto_remote'
+
+  - name: Install quarto template dependencies
+    become: yes
+    apt:
+      name:
+        - fonts-lmodern
