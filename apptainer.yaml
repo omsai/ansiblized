@@ -1,0 +1,25 @@
+---
+- name: Install Apptainer
+  hosts: localhost
+
+  tasks:
+
+  - name: Add apptainer repository and install package
+    block:
+    - name: Add apptainer repository
+      become: yes
+      apt_repository:
+        repo: ppa:apptainer/ppa
+        codename: >-
+          {{
+          'noble'
+          if ansible_facts.distribution_release == 'oracular'
+          else omit
+          }}
+    - name: Install package from apptainer repository
+      become: yes
+      apt:
+        name: apptainer
+        state: present
+    when:
+    - ansible_facts.distribution == 'Ubuntu'

@@ -1,0 +1,19 @@
+---
+- name: Install globus connect personal
+  hosts: localhost
+
+  tasks:
+
+  - name: Create destination directory
+    become: yes
+    ansible.builtin.file:
+      path: /opt/globus
+      state: directory
+      mode: '0755'
+
+  - name: Unpack remote tarball
+    become: yes
+    ansible.builtin.unarchive:
+      remote_src: true
+      src: https://downloads.globus.org/globus-connect-personal/linux/stable/globusconnectpersonal-latest.tgz
+      dest: /opt/globus
