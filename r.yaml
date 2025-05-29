@@ -68,6 +68,7 @@
         - libharfbuzz-dev
         - libjpeg-dev
         - libpng-dev
+        - librsvg2-dev
         - libssl-dev
         - libtiff5-dev
         - libv8-dev
