@@ -23,3 +23,9 @@
         name: apparmor
         state: restarted
       when: 'profile.changed'
+
+    - name: Install ffmpeg to play videos
+      become: yes
+      apt:
+        name: ffmpeg
+        state: present
