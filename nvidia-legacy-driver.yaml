@@ -1,0 +1,67 @@
+# On Debian 12, the nouveau driver is unstable for the GK106 GeForce
+# GTX 650 Ti, requiring an older nvidia driver.
+---
+
+- name: Install nvidia-legacy-340xx-driver on Debian 12
+  hosts: localhost
+  tasks:
+
+    - name: Install lshw and nvidia-detect
+      become: true
+      ansible.builtin.apt:
+        name:
+          - lshw
+          - nvidia-detect
+        state: present
+
+    - name: Query graphics hardware
+      ansible.builtin.command:
+        cmd: lshw -json -C video
+      changed_when: false
+      register: lshw
+
+    - name: Check whether the legacy driver is required for the OS
+      ansible.builtin.fail:
+        msg: Not a >= Debian 12 distribution
+      when: (ansible_facts.distribution != 'Debian') or
+            (ansible_facts.distribution_major_version | int < 12)
+
+    - debug:
+        msg: |
+          {{ (lshw.stdout | from_json)[0] }}
+
+    - name: Check whether the legacy driver is required for the hardware
+      ansible.builtin.fail:
+        msg: Not an nvidia graphics card
+      when: |
+        (lshw.stdout | from_json)[0].vendor
+        not in ['NVIDIA Corporation', 'nouveau']
+
+    - name: Print recommended driver
+      ansible.builtin.command:
+        cmd: nvidia-detect
+      changed_when: false
+      register: nvidia_detect
+
+    - debug:
+        msg: |
+          {{ nvidia_detect.stdout }}
+
+    - debug:
+        msg: |
+          {{ nvidia_detect.stdout | regex_search('nvidia-.*-driver') }}
+
+    - name: Install recommended nvidia-driver
+      become: true
+      ansible.builtin.apt:
+        name: |
+          {{ nvidia_detect.stdout | regex_search('nvidia-.*-driver') }}
+        state: present
+
+    - name: Workaround bug using .xsessionrc environmental variable
+      ansible.builtin.lineinfile:
+        path: |-
+          {{ ansible_user_dir }}/.xsessionrc
+        regexp: ^export WEBKIT_DISABLE_DMABUF_RENDERER=1
+        line: export WEBKIT_DISABLE_DMABUF_RENDERER=1
+        create: true
