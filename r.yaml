@@ -7,46 +7,41 @@
       Debian: 95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7
       Ubuntu: E298A3A825C0D65DFD57CBB651716619E084DAB9
     r_distro: '{{ ansible_facts.distribution_release }}'
+    r_key: /etc/apt/trusted.gpg.d/cran.asc
     ver: '{{ ansible_facts.distribution_major_version }}'
 
   tasks:
 
   - name: Fetch key for R source
     become: yes
-    apt_key:
-      keyserver: keyserver.ubuntu.com
-      id: '{{ r_pubkey[ansible_facts.distribution] }}'
-
-  - name: Read all Ubuntu distros for CRAN source
-    community.general.read_csv:
-      path: /usr/share/distro-info/ubuntu.csv
-      delimiter: ','
-    register: distro
-    when: ansible_facts.distribution == 'Ubuntu'
-    tags: distro
+    ansible.builtin.get_url:
+      url: |
+        https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ r_pubkey[ansible_facts.distribution] | lower() }}
+      dest: >-
+        {{ r_key }}
 
   - name: Lookup closest Ubuntu LTS distro name for CRAN source
-    set_fact:
-      r_distro: >-
-        {{
-        distro |
-        json_query(query) |
-        first() |
-        json_query("[series]") |
-        first()
-        }}
-    vars:
-      query: >-
-        list[?starts_with(version,'{{ ver }}')]
-        .{version: version, series: series}
     when: ansible_facts.distribution == 'Ubuntu'
     tags: distro
+    block:
+
+      - name: Equivalent Ubuntu LTS distro
+        ansible.builtin.command:
+          cmd: ubuntu-distro-info --lts
+        changed_when: false
+        register: distro
+
+      - name: Replace r_distro
+        ansible.builtin.set_fact:
+          r_distro: >-
+            {{ distro.stdout }}
 
   - name: Add R source
     become: yes
     apt_repository:
       repo: >-
         deb
+        [arch=amd64 signed-by={{ r_key }}]
         {{ r_mirror }}/bin/linux/{{ ansible_facts.distribution | lower() }}
         {{ r_distro }}-cran40/
       filename: r-project
@@ -74,6 +69,7 @@
         - libv8-dev
         - libxml2-dev
         - pandoc
+        - qpdf
     tags: apt
 
   - name: Install obsolete packages if necessary
