@@ -54,6 +54,7 @@
         - r-base-dev
         # Dependencies for R packages.
         - libaec-dev
+        - libarchive-dev
         - libcairo2-dev
         - libcurl4-openssl-dev
         - libfontconfig1-dev
