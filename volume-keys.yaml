@@ -1,0 +1,29 @@
+# Remap numpad / - + to volume mute, down, and up, respectively for keyboards
+# missing native volume control.
+---
+
+- name: Create startup script to xmodmap numpad to volume keys
+  hosts: localhost
+  vars:
+    file_xmodmap: '{{ ansible_env.HOME }}/.xmodmap-volume'
+    # yamllint disable rule:line-length
+    content_xmodmap: |
+      #!/bin/sh
+      xmodmap -e 'keycode 82 = XF86AudioLowerVolume KP_Subtract KP_Subtract KP_Subtract KP_Subtract KP_Subtract XF86Prev_VMode'
+      xmodmap -e 'keycode 86 = XF86AudioRaiseVolume KP_Add KP_Add KP_Add KP_Add KP_Add XF86Next_VMode'
+      xmodmap -e 'keycode 106 = XF86AudioMute KP_Divide KP_Divide KP_Divide KP_Divide KP_Divide XF86Ungrab'
+    # yamllint enable rule:line-length
+
+  tasks:
+
+    - name: Write .xmodmap-volume script
+      ansible.builtin.copy:
+        content: '{{ content_xmodmap }}'
+        dest: '{{ file_xmodmap }}'
+        mode: '0755'
+
+    - name: Reminder to manually run script on session startup
+      ansible.builtin.debug:
+        msg: >-
+          Don't forget to add the {{ file_xmodmap }} script to your session
+          startup.
