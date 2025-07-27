@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# {{ ansible_managed }}
+
+systemctl --user import-environment DISPLAY XAUTHORITY
+echo "set DISPLAY=$DISPLAY
+set XAUTHORITY=$XAUTHORITY"
+
+while read -r msg
+do
+    if [[ $msg =~ .*org.freedesktop.login1.Session.Unlock.* ]]
+    then
+        echo "$msg"
+	# Unfortunately this delay is needed :(
+	sleep 15
+        ~/.xmodmap-volume
+	echo "executed ~/.xmodmap-volume"
+    fi
+done < <( gdbus monitor -y -d org.freedesktop.login1 )

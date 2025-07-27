@@ -5,25 +5,44 @@
 - name: Create startup script to xmodmap numpad to volume keys
   hosts: localhost
   vars:
+    src_xmodmap: templates/xmodmap-volume.j2
+    src_xmodmapd: templates/xmodmap-volumed.j2
+    src_systemd_service: templates/volume-keys.service.j2
     file_xmodmap: '{{ ansible_env.HOME }}/.xmodmap-volume'
-    # yamllint disable rule:line-length
-    content_xmodmap: |
-      #!/bin/sh
-      xmodmap -e 'keycode 82 = XF86AudioLowerVolume KP_Subtract KP_Subtract KP_Subtract KP_Subtract KP_Subtract XF86Prev_VMode'
-      xmodmap -e 'keycode 86 = XF86AudioRaiseVolume KP_Add KP_Add KP_Add KP_Add KP_Add XF86Next_VMode'
-      xmodmap -e 'keycode 106 = XF86AudioMute KP_Divide KP_Divide KP_Divide KP_Divide KP_Divide XF86Ungrab'
-    # yamllint enable rule:line-length
+    file_xmodmapd: '{{ file_xmodmap }}d'
+    file_systemd_service: |-
+      {{ ansible_env.HOME }}/.config/systemd/user/volume-keys.service
 
   tasks:
 
-    - name: Write .xmodmap-volume script
-      ansible.builtin.copy:
-        content: '{{ content_xmodmap }}'
-        dest: '{{ file_xmodmap }}'
-        mode: '0755'
+    - name: Write scripts
+      ansible.builtin.template:
+        src: '{{ item.src }}'
+        dest: '{{ item.dest }}'
+        mode: '{{ item.mode }}'
+      loop:
+        - src: '{{ src_xmodmap }}'
+          dest: '{{ file_xmodmap }}'
+          mode: '0755'
+        - src: '{{ src_xmodmapd }}'
+          dest: '{{ file_xmodmapd }}'
+          mode: '0755'
+        - src: '{{ src_systemd_service }}'
+          dest: '{{ file_systemd_service }}'
+          mode: '0644'
+      notify: Restart volume-keys
 
-    - name: Reminder to manually run script on session startup
-      ansible.builtin.debug:
-        msg: >-
-          Don't forget to add the {{ file_xmodmap }} script to your session
-          startup.
+    - name: Add systemd service that runs after login
+      ansible.builtin.systemd_service:
+        name: volume-keys
+        scope: user
+        enabled: true
+      notify: Restart volume-keys
+
+  handlers:
+
+    - name: Restart volume-keys
+      ansible.builtin.systemd_service:
+        name: volume-keys
+        scope: user
+        state: restarted

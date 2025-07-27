@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+
+[Unit]
+Description=Remap volume control to keypad using xmodmap
+Documentation=man:xmodmap(1)
+
+[Service]
+ExecStart=%h/.xmodmap-volumed
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
