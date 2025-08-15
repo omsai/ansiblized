@@ -1,0 +1,108 @@
+# Install Pitt's GlobalProtect.
+# https://services.pitt.edu/TDClient/33/Portal/KB/ArticleDet?ID=2741
+# https://docs.paloaltonetworks.com/globalprotect/6-0/globalprotect-app-user-guide/globalprotect-app-for-linux/use-the-globalprotect-app-for-linux#id181NC060RNM
+---
+
+- name: Install Pitt VPN CLI
+  hosts: localhost
+  vars:
+    dir_dl: |-
+      {{ ansible_env.HOME }}/Downloads
+    src_crt: |-
+      {{ dir_dl }}/2020_Certs.zip
+    dir_crt: |-
+      /usr/local/share/ca-certificates
+    src_gp: |-
+      {{ dir_dl }}/PanGPLinux-6.2.0-c10.tgz
+    prefix_deb: GlobalProtect_
+    suffix_deb: deb-6.2.0.1-265.deb
+    file_cli: |-
+      {{ prefix_deb }}{{ suffix_deb }}
+    path_cli: |-
+      {{ dir_dl}}/{{ file_cli }}
+    file_ui: |-
+      {{ prefix_deb }}UI_{{ suffix_deb }}
+    path_ui: |-
+      {{ dir_dl }}/{{ file_ui }}
+    is_graphical: |-
+      {{ ansible_env.XDG_SESSION_TYPE in ["x11", "wayland"] }}
+
+  tasks:
+
+    - name: Confirm whether the host is being treated as graphical
+      ansible.builtin.debug:
+        var: is_graphical
+
+    - name: Create certificate directory
+      become: true
+      ansible.builtin.file:
+        path: |-
+          {{ dir_crt }}
+        mode: "0755"
+        state: directory
+      when: is_graphical
+
+    - name: Install certificates
+      become: true
+      ansible.builtin.unarchive:
+        src: |-
+          {{ src_crt }}
+        dest: |-
+          {{ dir_crt }}
+      when: is_graphical
+      notify: Trust certificates
+
+    - name: Extract GlobalProtect UI installer
+      ansible.builtin.unarchive:
+        src: |-
+          {{ src_gp }}
+        dest: |-
+          {{ dir_dl }}
+        include:
+          - |-
+            ./{{ file_ui }}
+        creates: |-
+          {{ path_ui }}
+      when: is_graphical
+
+      # The certificate are needed by the UI and the UI is automatically
+      # launched after installation.
+    - name: Update certificates
+      ansible.builtin.meta: flush_handlers
+
+    - name: Install GlobalProtect UI package
+      become: true
+      ansible.builtin.apt:
+        deb: |-
+          {{ path_ui }}
+        allow_downgrade: false
+      when: is_graphical
+
+    - name: Extract GlobalProtect CLI installer
+      ansible.builtin.unarchive:
+        src: |-
+          {{ src_gp }}
+        dest: |-
+          {{ dir_dl }}
+        include:
+          - |-
+            ./{{ file_cli }}
+        creates: |-
+          {{ path_cli }}
+      when: not is_graphical
+
+    - name: Install GlobalProtect CLI package
+      become: true
+      ansible.builtin.apt:
+        deb: |-
+          {{ path_cli }}
+        allow_downgrade: false
+      when: not is_graphical
+
+  handlers:
+
+    - name: Trust certificates
+      become: true
+      ansible.builtin.command:
+        cmd: update-ca-certificates
+      when: crt is changed
