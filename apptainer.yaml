@@ -4,22 +4,63 @@
 
   tasks:
 
-  - name: Add apptainer repository and install package
-    block:
-    - name: Add apptainer repository
-      become: yes
-      apt_repository:
-        repo: ppa:apptainer/ppa
-        codename: >-
-          {{
-          'noble'
-          if ansible_facts.distribution_release == 'oracular'
-          else omit
-          }}
-    - name: Install package from apptainer repository
-      become: yes
-      apt:
-        name: apptainer
-        state: present
-    when:
-    - ansible_facts.distribution == 'Ubuntu'
+    - name: Add apptainer repository and install package
+      when:
+        - ansible_facts.distribution == 'Ubuntu'
+      block:
+        - name: Add apptainer repository
+          become: true
+          ansible.builtin.apt_repository:
+            repo: ppa:apptainer/ppa
+            codename: >-
+              {{
+              'noble'
+              if ansible_facts.distribution_release == 'oracular'
+              else omit
+              }}
+        - name: Install package from apptainer repository
+          become: true
+          ansible.builtin.apt:
+            name: apptainer
+            state: present
+
+    - name: Build apptainer from source
+      when:
+        - ansible_facts.distribution == 'Debian'
+      block:
+        - name: Install OS dependencies
+          become: true
+          ansible.builtin.apt:
+            name:
+              - build-essential
+              - cryptsetup
+              - curl
+              - dh-apparmor
+              - fakeroot
+              - git
+              - libseccomp-dev
+              - libsubid-dev
+              - tzdata
+              - uidmap
+              - wget
+            state: present
+
+        - name: Clone Apptainer source code
+          ansible.builtin.git:
+            repo: https://github.com/apptainer/apptainer.git
+            version: v1.4.2
+            depth: 1
+            dest: |-
+              {{ ansible_env.HOME }}/src/apptainer
+
+        - name: Build and install Apptainer
+          ansible.builtin.shell:
+            cmd: |-
+              ./mconfig --with-suid
+              cd $(/bin/pwd)/builddir
+              make
+              sudo make install
+            chdir: |-
+              {{ ansible_env.HOME }}/src/apptainer
+            creates:
+              /usr/local/bin/apptainer
