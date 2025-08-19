@@ -1,0 +1,29 @@
+---
+- name: Setup OpenSSH server
+  hosts: localhost
+
+  tasks:
+
+    - name: Install OpenSSH server
+      become: true
+      ansible.builtin.apt:
+        name: openssh-server
+
+    - name: Disable password authentication
+      become: true
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: |-
+          #PasswordAuthentication yes
+        line: PasswordAuthentication no
+        state: present
+        validate: sshd -T -f %s
+      notify: Reload openssh-server
+
+  handlers:
+
+    - name: Reload openssh-server
+      become: true
+      ansible.builtin.systemd:
+        name: ssh
+        state: reloaded
