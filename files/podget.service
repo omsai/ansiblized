@@ -1,0 +1,6 @@
+[Unit]
+Description=Run podget
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podget -s

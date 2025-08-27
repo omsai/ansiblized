@@ -1,0 +1,9 @@
+[Unit]
+Description=Run podget daily
+
+[Timer]
+OnCalendar=*-*-* 10:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

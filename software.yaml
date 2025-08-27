@@ -131,32 +131,6 @@
       creates: /usr/lib/git-core/git-latexdiff
     tags: git-latexdiff
 
-  # https://github.com/dvehrs/podget/issues/64
-  - name: Install podget with patch for m4a filenames
-    become: yes
-    git:
-      repo: https://github.com/dvehrs/podget.git
-      dest: /opt/podget
-    tags: podget
-
-  - name: Install podget config symlink
-    file:
-      state: link
-      src: Sync/apps/podget/.podget
-      dest: ~/.podget
-    tags: podget
-
-  - name: Install podget cron job
-    cron:
-      name: podget
-      job: /opt/podget/podget -s
-      hour: '10'
-      minute: '5'
-      disabled: '{{ ansible_facts.hostname != podget_host }}'
-    tags:
-      - podget
-      - podget-host
-
   - name: Copy Syncthing user service
     copy:
       src: /usr/lib/systemd/user/syncthing.service

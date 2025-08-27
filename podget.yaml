@@ -1,0 +1,80 @@
+---
+- name: Install and choose podget download host
+  hosts: localhost
+  vars:
+    podget_host: xm1
+    podget_prefix: |-
+      {{ ansible_env.HOME }}/src
+    podget_dir: |-
+      {{ podget_prefix }}/podget
+    podget_systemd_src: files
+    podget_systemd_dest: |-
+      {{ ansible_env.XDG_CONFIG_HOME }}/systemd/user
+    podget_systemd_enabled: |-
+      {{ ansible_facts.hostname == podget_host }}
+    podget_systemd_state: |-
+      {{ "started" if ansible_facts.hostname == podget_host else "stopped" }}
+
+  tasks:
+
+    - name: Update local git repository
+      ansible.builtin.git:
+        repo: https://github.com/dvehrs/podget.git
+        depth: 1
+        version: dev
+        dest: |-
+          {{ podget_dir }}
+
+    - name: Read deb package version
+      ansible.builtin.command:
+        cmd: |-
+          grep -o -m1 -P '(?<=\()[^)]+' {{ podget_dir }}/debian/changelog
+      changed_when: false
+      register: grep
+
+    - name: Set podget deb package version path
+      ansible.builtin.set_fact:
+        podget_deb: |-
+          {{ podget_prefix }}/podget_{{ grep.stdout }}_all.deb
+
+    - name: Create podget deb package from git
+      ansible.builtin.command:
+        cmd: |-
+          dpkg-buildpackage --build=binary --no-sign {{ podget_dir }}
+        creates: |-
+          {{ podget_deb }}
+      register: deb
+
+    - name: Install podget deb package from git
+      become: true
+      ansible.builtin.apt:
+        deb: |-
+          {{ podget_deb }}
+
+    - name: Install podget config symlink
+      ansible.builtin.file:
+        state: link
+        src: Sync/apps/podget/.podget
+        dest: ~/.podget
+
+    - name: Copy podget systemd user service and timer
+      ansible.builtin.copy:
+        src: |-
+          {{ podget_systemd_src }}/{{ item }}
+        dest: |-
+          {{ podget_systemd_dest }}/{{ item }}
+        mode: "0644"
+      loop:
+        - podget.service
+        - podget.timer
+
+    - name: Enable podget systemd timer
+      ansible.builtin.systemd_service:
+        name: podget.timer
+        scope: user
+        enabled: |-
+          {{ podget_systemd_enabled }}
+        state: |-
+          {{ podget_systemd_state }}
+      tags:
+        - podget-host
