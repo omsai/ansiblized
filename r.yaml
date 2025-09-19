@@ -12,71 +12,72 @@
 
   tasks:
 
-  - name: Fetch key for R source
-    become: yes
-    ansible.builtin.get_url:
-      url: |
-        https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ r_pubkey[ansible_facts.distribution] | lower() }}
-      dest: >-
-        {{ r_key }}
+    - name: Fetch key for R source
+      become: true
+      ansible.builtin.get_url:
+        url: |-
+          https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ r_pubkey[ansible_facts.distribution] | lower() }}
+        dest: >-
+          {{ r_key }}
+        mode: "0644"
 
-  - name: Lookup closest Ubuntu LTS distro name for CRAN source
-    when: ansible_facts.distribution == 'Ubuntu'
-    tags: distro
-    block:
+    - name: Lookup closest Ubuntu LTS distro name for CRAN source
+      when: ansible_facts.distribution == 'Ubuntu'
+      tags: distro
+      block:
 
-      - name: Equivalent Ubuntu LTS distro
-        ansible.builtin.command:
-          cmd: ubuntu-distro-info --lts
-        changed_when: false
-        register: distro
+        - name: Equivalent Ubuntu LTS distro
+          ansible.builtin.command:
+            cmd: ubuntu-distro-info --lts
+          changed_when: false
+          register: distro
 
-      - name: Replace r_distro
-        ansible.builtin.set_fact:
-          r_distro: >-
-            {{ distro.stdout }}
+        - name: Replace r_distro
+          ansible.builtin.set_fact:
+            r_distro: >-
+              {{ distro.stdout }}
 
-  - name: Add R source
-    become: yes
-    apt_repository:
-      repo: >-
-        deb
-        [arch=amd64 signed-by={{ r_key }}]
-        {{ r_mirror }}/bin/linux/{{ ansible_facts.distribution | lower() }}
-        {{ r_distro }}-cran40/
-      filename: r-project
+    - name: Add R source
+      become: true
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb
+          [arch=amd64 signed-by={{ r_key }}]
+          {{ r_mirror }}/bin/linux/{{ ansible_facts.distribution | lower() }}
+          {{ r_distro }}-cran40/
+        filename: r-project
 
-  - name: Install packages
-    become: yes
-    apt:
-      name:
-        # The top-level R installation package.
-        - r-base-dev
-        # Dependencies for R packages.
-        - libaec-dev
-        - libarchive-dev
-        - libcairo2-dev
-        - libcurl4-openssl-dev
-        - libfontconfig1-dev
-        - libfreetype6-dev
-        - libfribidi-dev
-        - libgit2-dev
-        - libglpk-dev
-        - libharfbuzz-dev
-        - libjpeg-dev
-        - libpng-dev
-        - librsvg2-dev
-        - libssl-dev
-        - libtiff5-dev
-        - libv8-dev
-        - libxml2-dev
-        - pandoc
-        - qpdf
-    tags: apt
+    - name: Install packages
+      become: true
+      ansible.builtin.apt:
+        name:
+          # The top-level R installation package.
+          - r-base-dev
+          # Dependencies for R packages.
+          - libaec-dev
+          - libarchive-dev
+          - libcairo2-dev
+          - libcurl4-openssl-dev
+          - libfontconfig1-dev
+          - libfreetype6-dev
+          - libfribidi-dev
+          - libgit2-dev
+          - libglpk-dev
+          - libharfbuzz-dev
+          - libjpeg-dev
+          - libpng-dev
+          - librsvg2-dev
+          - libssl-dev
+          - libtiff5-dev
+          - libv8-dev
+          - libxml2-dev
+          - pandoc
+          - qpdf
+      tags: apt
 
-  - name: Install obsolete packages if necessary
-    become: yes
-    apt:
-      name:
-        - pandoc-citeproc
-    ignore_errors: true
+    - name: Install obsolete packages if necessary
+      become: true
+      ansible.builtin.apt:
+        name:
+          - pandoc-citeproc
+      ignore_errors: true
