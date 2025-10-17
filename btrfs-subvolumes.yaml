@@ -1,3 +1,4 @@
+---
 - name: Create BTRFS subvolumes and mount points
   hosts: localhost
   vars:
@@ -13,24 +14,79 @@
         path: /home/pan79/shoemaker-lab
       - subvolume: /@home/@lxd
         path: /home/lxd
+    btrfs_systemd_src: files
+    btrfs_systemd_dest: /usr/local/lib/systemd/system
 
   tasks:
 
-  - name: Create BTRFS subvolumes
-    community.general.btrfs_subvolume:
-      name: '{{ item.subvolume }}'
-      filesystem_label: '{{ btrfs_label }}'
-      recursive: true
-      automount: true
-    become: true
-    loop: '{{ btrfs_subvolume_path }}'
+    - name: Create BTRFS subvolumes
+      community.general.btrfs_subvolume:
+        name: '{{ item.subvolume }}'
+        filesystem_label: '{{ btrfs_label }}'
+        recursive: true
+        automount: true
+      become: true
+      loop: '{{ btrfs_subvolume_path }}'
 
-  - name: Mount BTRFS subvolumes
-    ansible.posix.mount:
-      src: 'LABEL={{ btrfs_label }}'
-      path: '{{ mount_prefix }}{{ item.path }}'
-      state: mounted
-      fstype: btrfs
-      opts: 'defaults,X-mount.mkdir,compress=zstd,nodiscard,noatime,subvol={{ item.subvolume }}'
-    become: true
-    loop: '{{ btrfs_subvolume_path }}'
+    - name: Mount BTRFS subvolumes
+      ansible.posix.mount:
+        src: 'LABEL={{ btrfs_label }}'
+        path: '{{ mount_prefix }}{{ item.path }}'
+        state: mounted
+        fstype: btrfs
+        opts: 'defaults,X-mount.mkdir,compress=zstd,nodiscard,noatime,subvol={{ item.subvolume }}'
+      become: true
+      loop: '{{ btrfs_subvolume_path }}'
+
+    - name: Install scrub service and timer
+      ansible.builtin.copy:
+        src: |-
+          {{ btrfs_systemd_src }}/{{ item }}
+        dest: |-
+          {{ btrfs_systemd_dest }}/{{ item }}
+        mode: "0644"
+      become: true
+      # The systemd files were downloaded from Arch Linux:
+      # https://gitlab.archlinux.org/archlinux/packaging/packages/btrfs-progs
+      loop:
+        - btrfs-scrub@.service
+        - btrfs-scrub@.timer
+      tags:
+        - systemd
+
+    - name: Convert filesystem paths to systemd paths
+      ansible.builtin.command:
+        cmd: |-
+          systemd-escape -p {{ item.path }}
+      changed_when: false
+      register: path_escaped
+      loop: '{{ btrfs_subvolume_path }}'
+      tags:
+        - systemd
+
+    - name: Print escaped btrfs paths
+      ansible.builtin.set_fact:
+        btrfs_path_escaped: |-
+          {{
+          path_escaped.results |
+          community.general.json_query("[*].stdout")
+          }}
+      tags:
+        - systemd
+
+    - name: Print escaped btrfs paths
+      ansible.builtin.debug:
+        var: btrfs_path_escaped
+      tags:
+        - systemd
+
+    - name: Schedule scrub
+      ansible.builtin.systemd_service:
+        name: 'btrfs-scrub@{{ item }}.timer'
+        scope: system
+        enabled: true
+        state: started
+      become: true
+      loop: '{{ btrfs_path_escaped }}'
+      tags:
+        - systemd
