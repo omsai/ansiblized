@@ -1,0 +1,20 @@
+---
+- name: Disable capslock
+  hosts: localhost
+
+  tasks:
+
+    - name: Disable capslock in the keyboard x11 configuration
+      become: true
+      ansible.builtin.blockinfile:
+        path: /etc/X11/xorg.conf.d/nocapslock.conf
+        create: true
+        mode: "0644"
+        block: |
+          Section "InputClass"
+              Identifier "Keyboard"
+              Driver "evdev"
+              Option "XkbOptions" "caps:none"
+              MatchIsKeyboard "on"
+          EndSection
+      when: '"DISPLAY" is in ansible_facts.env'
